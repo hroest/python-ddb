@@ -1,0 +1,65 @@
+\include{header}
+
+\usepackage{gensymb}
+\usepackage{hyphenat}
+\usepackage{subfig}
+
+%\setcounter{tocdepth}{3}
+\begin{document}
+
+\author{Hannes Röst}
+\title{Executing Perl in Python}
+\maketitle
+
+On the Python wiki, there is some documentation on how to work with
+other languages:
+\url{http://wiki.python.org/moin/IntegratingPythonWithOtherLanguages}
+
+\section{PyPerl}
+I had success with PyPerl (Mandrive thing). I had to donwload the
+original source code and then apply those 10 patches by hand. But at
+least it worked, here is an example that creates a GENE object and
+inserts it into the database (yes database adaptors work correctly).
+
+\begin{verbatim}
+import perl
+perl.eval( "use lib './' ")
+perl.require( 'DDB::GENE' )
+
+obj = perl.callm("new", 'DDB::GENE'  )
+obj[ '_ensembl_stable_id' ] = 9
+obj[ '_experiment_key' ] = 42
+obj.addignore_setid()
+\end{verbatim}
+
+%#perl.callm( 'addignore_setid', obj, myhash)
+%myhash = perl.get_ref( '%' )
+%h = {'ensembl_stable_id':  3}
+%myhash.update( h )
+
+%TODO: intercept method calls
+Now we still have to create objects that we can call as we want. We dont
+want the object to be a hash because later on we want to have attributes
+and not elements of a dictionary. Here is a way to catch method /
+attribute calls in python we could use:
+\url{http://stackoverflow.com/questions/2704434/intercept-method-calls-in-python}
+
+Here are more websites:
+\url{http://search.cpan.org/~gaas/pyperl-1.0/perlmodule.pod}
+
+\url{http://wiki.python.org/moin/PyPerl}
+
+\section{Other Methods}
+I found those but do not know whether they work\ldots
+
+\url{http://www.boriel.com/2007/01/21/calling-perl-from-python/}
+
+separate perl process to execute it (over STDIN):
+\url{http://pypi.python.org/pypi/perlprocess/0.1}
+
+execute through Perl interpreter:
+\url{http://pypi.python.org/pypi/PythonPerl/0.9}
+
+Commercial Bridgekepper converts Perl and Python source 
+\url{http://www.crazy-compilers.com/bridgekeeper/}
+\end{document}
