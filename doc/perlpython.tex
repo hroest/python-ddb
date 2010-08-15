@@ -49,6 +49,54 @@ Here are more websites:
 
 \url{http://wiki.python.org/moin/PyPerl}
 
+
+
+\newpage
+
+Here I used the object abstraction using the Protein object that inherits from
+the \url{PerlWrapper} object and has a \url{ddb_api} as a metaclass. I create
+a wrapper object \url{Protein} that has all the same methods and attributes as
+the Perl object and more can be added.
+
+\begin{verbatim}
+>>> p = Protein()
+called init DDB::PROTEIN
+try to set _file_key to
+try to set _test to 0
+try to set _parse_key to 0
+try to set _experiment_key to
+try to set _sequence_key to
+try to set _protein_type to
+try to set _comment to
+try to set _gene_key to 0
+try to set _probability to 0
+try to set _mark_warning to
+try to set _id to
+>>> p.set_sequence_key( 42 )
+try to set _sequence_key to 42
+>>> p.set_experiment_key( 1 )
+try to set _experiment_key to 1
+>>> p.set_parse_key( 1 )
+try to set _parse_key to 1
+>>> p.set_probability( 0.6 )
+try to set _probability to 0.6
+>>> p.addignore_setid()
+try to get addignore_setid
+'0'
+>>> p.get_sequence_key()
+try to get _sequence_key
+'42'
+>>>
+>>> sequence = p.get_sequence()
+try to get get_sequence
+>>> sequence.get_len()
+7
+>>> sequence.get_sequence()
+'PROTEIN'
+\end{verbatim}
+
+
+\newpage
 \section{Other Methods}
 I found those but do not know whether they work\ldots
 

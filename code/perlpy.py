@@ -54,6 +54,12 @@ myobj = PerlWrapper( 'DDB::PROTEIN')
 ###########################################################################
 
 class PerlWrapper(object):
+    """Superclass for all DDB objects.
+
+    This class intercepts all set and get calls and passes them to the 
+    internal PerlRef object "ref". It checks the functions on the Perl
+    object first and THEN the ones from the Python object.
+    """
     def __init__(self,name):
         #because ref is not defined yet, we need to 
         #set it over __dict__ instead of self.ref
@@ -63,11 +69,11 @@ class PerlWrapper(object):
     def __getattr__(self,name):
         print('try to get %s' % name)
         try:
-            #try to find the attribute first in the inner Perl object
+            #try to find the attribute in the inner Perl object first
             return self.ref[ name ]
         except KeyError:
             try:
-                #now try to find a function in the inner Perl object
+                #now try to find a function in the inner Perl object next
                 return eval('self.ref.%s' % name)
             except perl.PerlError: pass
         print('try to get %s from Python object' % name)
@@ -82,6 +88,11 @@ class PerlWrapper(object):
             self.__dict__[ name ] = value
 
 class ddb_api(type):
+    """Metaclass for all DDB objects.
+    
+    This is the metaclass that reads the classes _attr_data hash and creates
+    get_* and set_* methods for each element in the hash.
+    """
     def __new__(meta, classname, supers, classdict):
         #print classdict['_attr_data']
         for attr in classdict['_attr_data']:
@@ -96,6 +107,10 @@ class ddb_api(type):
         return type.__new__(meta, classname, supers, classdict)
 
 class Protein(PerlWrapper):
+    """DDB object for ddb.protein.
+
+    .
+    """
     #only add the metaclass if you want to create default set_ and get_
     #methods
     __metaclass__ = ddb_api
@@ -124,12 +139,12 @@ class Protein(PerlWrapper):
 
 
 p = Protein()
-p._sequence_key = 42
-p._experiment_key = 1
-p._parse_key = 1
-p._probability = 0.6
+p.set_sequence_key( 42 )
+p.set_experiment_key( 1 )
+p.set_parse_key( 1 )
+p.set_probability( 0.6 )
 p.addignore_setid()
-
+p.get_sequence_key()
 
 sequence = p.get_sequence()
 sequence.get_len()
