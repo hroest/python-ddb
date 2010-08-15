@@ -52,13 +52,21 @@ myobj = PerlWrapper( 'DDB::PROTEIN')
 ###########################################################################
 ## Object abstraction
 ###########################################################################
+#
+# In order to get a variable, one can use the obj.get_x function
+#
+# In order to set a variable in the Perl object, one can use the
+# obj.set_x functions, the obj.x = expression or obj.ref['x'] = 
+#
+# In order to set a variable in the Python object, one can only use
+# obj.__dict__['x'] = 
 
 class PerlWrapper(object):
     """Superclass for all DDB objects.
 
     This class intercepts all set and get calls and passes them to the 
-    internal PerlRef object "ref". It checks the functions on the Perl
-    object first and THEN the ones from the Python object.
+    internal PerlRef object "ref". It checks the functions on the Python
+    object first and THEN the ones from the Perl object.
     """
     def __init__(self,name):
         #because ref is not defined yet, we need to 
@@ -69,23 +77,24 @@ class PerlWrapper(object):
     def __getattr__(self,name):
         print('try to get %s' % name)
         try:
-            #try to find the attribute in the inner Perl object first
+            #try to find the attribute in the Python object first
+            return object.__getattribute__(self, name)  
+        except AttributeError: pass
+        print('try to get %s from Perl object' % name)
+        try:
+            #now try to find the attribute in the inner Perl object 
             return self.ref[ name ]
         except KeyError:
-            try:
-                #now try to find a function in the inner Perl object next
-                return eval('self.ref.%s' % name)
-            except perl.PerlError: pass
-        print('try to get %s from Python object' % name)
-        return object.__getattribute__(self, name)
+            #now try to find the function in the inner Perl object 
+            return eval('self.ref.%s' % name)
     def __setattr__(self, name, value):
         print('try to set %s to %s' % (name, value))
-        try:
-            #try to find the attribute first in the inner Perl object
-            self.ref[ name ] = value
-        except KeyError:
-            print('try to set %s to %s in Python object' % (name, value))
+        if self.__dict__.has_key(name) or name == 'ref':
+            #try to set the attribute first in the inner Python object
             self.__dict__[ name ] = value
+        else:
+            print('try to set %s to %s in Perl object' % (name, value))
+            self.ref[ name ] = value
 
 class ddb_api(type):
     """Metaclass for all DDB objects.
@@ -131,7 +140,7 @@ class Protein(PerlWrapper):
         PerlWrapper.__init__( self, 'DDB::PROTEIN')
         for attr in Protein._attr_data:
             #self.__dict__[ attr ] = _attr_data[attr][0]
-            exec("self.%s = Protein._attr_data['%s'][0]" % (attr, attr) ) 
+            #exec("self.%s = Protein._attr_data['%s'][0]" % (attr, attr) ) 
             pass
     def get_id(self): 
         print('here in own protein id fxn')
