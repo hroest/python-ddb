@@ -69,14 +69,26 @@ class ddb_api(type):
         if debug: print('Create class ' + classname)
         for attr in classdict['_attr_data']:
             if debug: print('adding getters and settes for ' + attr)
+            if debug: print('adding getters and settes for ' + attr + 
+                " which are " + str(type(classdict['_attr_data'][attr][0]))  )
             exec( "def getter(self): return self.%s" % attr)
             exec( "def setter(self, val): self.%s = val" % attr)
+            if type(classdict['_attr_data'][attr][0])  == int:
+                exec( "def getter(self): return int(self.%s)" % attr)
+            if type(classdict['_attr_data'][attr][0])  == float:
+                exec( "def getter(self): return float(self.%s)" % attr)
             if debug: 
                 exec( "def getter(self): \
                 print('called get%s'); return self.%s" % (attr, attr))
                 exec( "def setter(self, val): \
                 print('called set%s with %%s'%%val); \
                      self.%s = val" % (attr, attr))
+                if type(classdict['_attr_data'][attr][0])  == int:
+                    exec( "def getter(self): print('called get%s, ' + \
+                         'int convert'); return int(self.%s)" % (attr, attr))
+                if type(classdict['_attr_data'][attr][0])  == float:
+                    exec( "def getter(self): print('called get%s, '  + \
+                        'float convert'); return float(self.%s)" % (attr, attr))
             if classdict['_attr_data'][attr][1].find('read') != -1:
                 if not classdict.has_key('get%s' % attr): 
                     classdict['get%s' % attr ] = getter

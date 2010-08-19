@@ -96,8 +96,8 @@ class TestSequence(unittest.TestCase):
         self.test_addignore_sequence()
         s = self.sequence
         self.assertEqual( int( s.id ), testsequence )
-        self.assertEqual( s.id, s._id)
+        self.assertEqual( s.id, int(s._id) )
         self.assertEqual( s.id, s.get_id())
-        self.assertEqual( s.id, s.ref['_id'])
+        self.assertEqual( s.id, int(s.ref['_id']) )
 
 unittest.main()
