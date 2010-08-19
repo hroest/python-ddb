@@ -8,6 +8,7 @@ import ddb
 testexperiment = 3331
 testprotein = 3174147
 testsequence = 18075093
+testpeptide = 11861373
 
 class TestProtein(unittest.TestCase):
     "Test Protein class"
@@ -76,7 +77,6 @@ class TestDDBAbstraction(unittest.TestCase):
         except ddb.AccessError: pass
         else: self.fail("should not set read only attribute")
 
-
 class TestSequence(unittest.TestCase):
     "Test Sequence class"
 
@@ -99,5 +99,25 @@ class TestSequence(unittest.TestCase):
         self.assertEqual( s.id, int(s._id) )
         self.assertEqual( s.id, s.get_id())
         self.assertEqual( s.id, int(s.ref['_id']) )
+
+class TestPeptide(unittest.TestCase):
+    "Test Peptide class"
+
+    def setUp(self):
+        self.peptide = ddb.Peptide()
+
+    def test_addignore_sequence(self):
+        p = self.peptide
+        p.peptide = 'PEPTIDE'
+        p.experiment_key = testexperiment
+        p.peptide_type = 'bioinfo'
+        p.addignore_setid()
+        self.assertEqual( testpeptide, p.id )
+
+    def test_creation_method(self):
+        p = ddb.Peptide(peptide='PEPTIDE',experiment_key=testexperiment,peptide_type='bioinfo')
+        p.addignore_setid()
+        self.assertEqual( testpeptide, p.id )
+
 
 unittest.main()
