@@ -22,6 +22,7 @@ class Protein(PerlWrapper):
             '_test' : [0,'read/write'],
             '_test_readonly' : [0,'read']
     }
+
     def __init__(self, **kwargs):
         perl.require( 'DDB::PROTEIN' )
         PerlWrapper.__init__( self, 'DDB::PROTEIN')
