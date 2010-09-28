@@ -25,8 +25,6 @@ debug = False
 
 
 
-
-
 ###########################################################################
 ## Do not modify anything below this line
 ###########################################################################
@@ -36,4 +34,9 @@ if perl_ddb_location != '':
 
 def get_db_connector():
     db = MySQLdb.connect(read_default_file=mysql_conf_file)
+    return db
 
+def get_db_cursor():
+    assert False
+    get_db_connector()
+    return db.cursor()

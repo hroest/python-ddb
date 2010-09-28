@@ -36,3 +36,19 @@ class Peptide(PerlWrapper):
                 if debug: print(k + ' is in _attr_data')
                 setattr(self, '_' + k, kwargs[k] )
             if debug: print(k)
+
+    def get_proteins(self):
+        import ddb
+        p_ids = [v for v in self.get_protein_ids() ]
+        return [ddb.Protein(id = p_id) for p_id in p_ids]
+
+    @staticmethod
+    def find_by_sequence_and_experiment_key(sequence, experiment_key):
+        db = config.get_db_connector()
+        #cursor = config.get_db_cursor()
+        cursor = db.cursor()
+        cursor.execute( 'SELECT id from ' + Peptide.__table__ + 
+                       ' where sequence = %s and experiment_key = %s', 
+                      ( sequence, experiment_key)  )
+        #due to mysql constraints, there is only one result
+        return Peptide( id = cursor.fetchall()[0][0] )
