@@ -29,22 +29,33 @@ db_meta = create_engine('mysql://', creator=connection_creator('ddbMeta'), echo 
 metadata_meta = MetaData(); metadata_meta.bind = db_meta
 
 
-class Genome(object): 
-    pass
+Base_meta = declarative_base()
+Base_meta.metadata.bind = db_meta
+Base_genome = declarative_base()
+Base_genome.metadata.bind = db_genome
 
-class Feature(object): 
+
+Base = declarative_base()
+Base.metadata.bind = db
+
+class ProtPepLink(Base): __tablename__ = 'protPepLink'; __table_args__ = {'autoload': True}
+class GeneProtLink(Base): __tablename__ = 'geneProtLink'; __table_args__ = {'autoload': True}
+class Sequence(object): pass
+class Feature(object): pass
+
+class Peptide(Base):
+    __tablename__ = 'peptide'
+    __table_args__ = {'autoload': True}
     def __repr__(self):
-       return "<Feature(id '%s', seq '%s', genome '%s', '%s', '%s', '%s')>" % (self.id, self.genome_key, self.sequence_key, self.start, self.end, self.gene )
+       return "<Peptide('%s','%s','%s')>" % (self.id, self.experiment_key, self.sequence )
 
-class Sequence(object): 
-    pass
 
-class Sequence(object): 
-    pass
+print dir(Sequence)
+print Sequence
+
 
 from sqlalchemy import MetaData, create_engine, Table
 from sqlalchemy.orm import sessionmaker, mapper, relation
-#genome_table = Table('book_chapters', pgmetadata,autoload=True)
 feature_table = Table('feature', metadata_genome,autoload=True)
 sequence_table = Table('sequence', metadata_meta,autoload=True)
 mapper(Sequence, sequence_table)
@@ -54,49 +65,56 @@ mapper(Feature, feature_table , properties = {
         foreign_keys=[feature_table.c.sequence_key]) }
       )
 
+#Feature.sequence = relation ('Sequence', 
+#        primaryjoin='Feature.sequence_key==Sequence.id', 
+#        foreign_keys=['sequence_key', Sequence.id])
+
+class Protein(Base):
+    __tablename__ = 'protein'
+    __table_args__ = {'autoload': True}
+    peptides = relation('Peptide', secondary=ProtPepLink.__table__,
+        primaryjoin='Protein.id==ProtPepLink.protein_key',
+        secondaryjoin='ProtPepLink.peptide_key==Peptide.id',
+        backref='proteins', 
+        foreign_keys=['id', ProtPepLink.protein_key, ProtPepLink.peptide_key])
+    sequence = relation ('Sequence', 
+        primaryjoin='Protein.sequence_key==Sequence.id',
+        backref='proteins',
+        foreign_keys=[ProtPepLink.protein_key, ProtPepLink.peptide_key])
+
+    def __repr__(self):
+       return "<Protein('%s','%s','%s')>" % (self.id, self.experiment_key, 'asdf') #self.sequence )
+
+# mapper(Protein, protein_table, properties = {
+#     'peptides' : relation(Peptide, secondary=protPepLink_table,
+#         primaryjoin=protein_table.c.id==protPepLink_table.c.protein_key, 
+#         secondaryjoin=and_(protPepLink_table.c.peptide_key==peptide_table.c.id),
+#         backref='proteins', 
+#         foreign_keys=[protPepLink_table.c.protein_key, protPepLink_table.c.peptide_key]),
+#     'genes' : relation(Gene, secondary=geneProtLink_table,
+#         primaryjoin=protein_table.c.id==geneProtLink_table.c.protein_key, 
+#         secondaryjoin=and_(geneProtLink_table.c.gene_key==gene_table.c.id),
+#         backref='proteins', 
+#         foreign_keys=[geneProtLink_table.c.protein_key, geneProtLink_table.c.gene_key])
+# })
+
+
+
+class Gene(Base):
+    __tablename__ = 'gene'
+    __table_args__ = {'autoload': True}
+    def __repr__(self):
+       return "<Gene('%s','%s','%s')>" % (self.id, self.experiment_key, self.description )
+
+
 Session = sessionmaker()
 session = Session()
+
+
 myfeature = session.query(Feature).filter_by(id='1').first() 
 print myfeature
 print dir(myfeature)
 print myfeature.sequence
-
-class Peptide(object):
-    def __repr__(self):
-       return "<Peptide('%s','%s','%s')>" % (self.id, self.experiment_key, self.sequence )
-
-class Protein(object):
-    def __repr__(self):
-       return "<Protein('%s','%s','%s')>" % (self.id, self.experiment_key, self.sequence )
-
-class Gene(object):
-    def __repr__(self):
-       return "<Gene('%s','%s','%s')>" % (self.id, self.experiment_key, self.description )
-
-protein_table = Table('protein', mymetadata,autoload=True)
-peptide_table = Table('peptide', mymetadata,autoload=True)
-gene_table =    Table('gene', mymetadata,autoload=True)
-protPepLink_table = Table('protPepLink', mymetadata, autoload=True)
-geneProtLink_table = Table('geneProtLink', mymetadata,autoload=True)
-
-mapper(Protein, protein_table, properties = {
-    'sequence' : relation (Sequence, 
-        primaryjoin=protein_table.c.sequence_key==sequence_table.c.id, 
-        backref='proteins',
-        foreign_keys=[protein_table.c.sequence_key]), 
-    'peptides' : relation(Peptide, secondary=protPepLink_table,
-        primaryjoin=protein_table.c.id==protPepLink_table.c.protein_key, 
-        secondaryjoin=and_(protPepLink_table.c.peptide_key==peptide_table.c.id),
-        backref='proteins', 
-        foreign_keys=[protPepLink_table.c.protein_key, protPepLink_table.c.peptide_key]),
-    'genes' : relation(Gene, secondary=geneProtLink_table,
-        primaryjoin=protein_table.c.id==geneProtLink_table.c.protein_key, 
-        secondaryjoin=and_(geneProtLink_table.c.gene_key==gene_table.c.id),
-        backref='proteins', 
-        foreign_keys=[geneProtLink_table.c.protein_key, geneProtLink_table.c.gene_key])
-})
-mapper(Peptide, peptide_table)
-mapper(Gene, gene_table)
 
 
 mypeptide = session.query(Peptide).filter_by(experiment_key='3130').first() 
