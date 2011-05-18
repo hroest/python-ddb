@@ -1,8 +1,9 @@
-from sqlalchemy.orm import mapper, relation
+from sqlalchemy.orm import mapper, relation, backref
 from sqlalchemy import and_
 from sqlalchemy import select
 from tables import *
 import datetime
+from sqlalchemy import func #SQL functions like compress, sha1 etc
 
 def add_init(myclass):
 
@@ -13,7 +14,7 @@ def add_init(myclass):
             setattr( self, k, kwargs[k])
 
     def init_with_defaults(self, **kwargs): 
-        for d in self.__class__.__defaults: setattr( self, d, self.__class__.__defaults[d])
+        for d in self.__class__._defaults: setattr( self, d, self.__class__._defaults[d])
         self.insert_date = datetime.datetime.utcnow().strftime('%Y-%m-%d')
 
         # we go through all arguments given as keywords and set them 
@@ -21,9 +22,7 @@ def add_init(myclass):
         for k in kwargs:
             setattr( self, k, kwargs[k])
 
-    print "setting up init"
-    print myclass.__dict__
-    if myclass.__dict__.has_key('__defaults'): myclass.__init__ = init_with_defaults
+    if myclass.__dict__.has_key('_defaults'): myclass.__init__ = init_with_defaults
     else:                                      myclass.__init__ = init_standard
     return myclass
 
@@ -74,28 +73,21 @@ class GenomeSeq(object):
     def _set_seq(self, text):
         self.compress_seq = func.compress(text)
 
-@add_mapper(sequence_table)
 @add_addfxn
 @add_init
 class Sequence(object): 
 
-    def addignore_setid(self, session, db):
-        cursor = db.cursor()
-        exists = self.exists(cursor)
-        if exists == 0: return self.add(session, db)
-        else: return session.query(Sequence).filter_by(id=exists).first()  
+    def get_sequence(self):
+        return self._sequence
 
-    def add(self, session, db):
-        cursor = db.cursor()
-        res = cursor.execute( "insert into ddbMeta.sequence (sha1, sequence) " + \
-            "VALUES (sha1(upper('%s')), upper('%s') ) " % ( self.sequence , self.sequence))
-        insert_id = db.insert_id()
-        return session.query(Sequence).filter_by(id=insert_id).first()
+    def set_sequence(self, sequence):
+        self._sequence = sequence
+        self.sha1 = func.sha1(func.upper(sequence))
+
+    sequence = property(get_sequence,set_sequence)
 
     def exists(self, cursor): 
-        res = cursor.execute( "select id from ddbMeta.sequence where sha1 = sha1(UPPER('%s')) " % self.sequence )
-        if res == 0: return 0
-        return cursor.fetchone()[0]
+        return session.query(Sequence).filter_by(sha1=self.sha1).first()
 
     def __repr__(self):
         if self.sequence and len(self.sequence) > 80:
@@ -103,11 +95,17 @@ class Sequence(object):
         else: rseq = self.sequence
         return "<Sequence(id '%s', '%s', sequence '%s')>" % (self.id, self.sha1, rseq)
 
+mapper(Sequence, sequence_table, properties = {
+    '_sequence' : sequence_table.c.sequence,
+    'id' : sequence_table.c.id,
+    'sha1' : sequence_table.c.sha1,
+})
+
 @add_init
 @add_addfxn
 class Feature(object): 
 
-    ___defaults = { 
+    _defaults = { 
         'mol_type'      : '',
         'db_xref'       : '',   
         'gene'          : '',   
