@@ -189,3 +189,49 @@ mapper(Protein, protein_table, properties = {
         foreign_keys=[geneProtLink_table.c.protein_key, geneProtLink_table.c.gene_key]),
     }, 
 )
+
+
+@add_addfxn
+@add_init
+class Experiment(object):
+
+    _defaults = {
+        'name'                   : '', 
+        'short_description'      : '', 
+        'description'            : '', 
+        'super_experiment_key'   :  0, 
+        'submitter'              : '', 
+        'principal_investigator' : '', 
+        'aim'                    : '', 
+        'conclusion'             : '', 
+        'experiment_type'        : 'bioinformatics', 
+        'start_date'             : '0000-00-00', 
+        'finish_date'            : '0000-00-00', 
+        'public'                 : 'no', 
+    }
+
+    def __repr__(self):
+       return "<Experiment('%s','%s','%s')>" % (self.id, self.name, self.short_description )
+
+    def get_parents(self):
+        p = self.parent
+        l = [p]
+        while p:
+            p = p.parent
+            if p: l.append(p)
+        return l
+
+
+mapper(Experiment, experiment_table, properties = {
+    'proteins' : relation (Protein, 
+        primaryjoin=protein_table.c.experiment_key==experiment_table.c.id, 
+        backref=backref('experiment', uselist=False),
+        foreign_keys=[protein_table.c.experiment_key]), 
+    'parent' : relation (Experiment, 
+        uselist=False,
+        primaryjoin=experiment_table.c.super_experiment_key==experiment_table.c.id, 
+        backref='children',
+        foreign_keys=[experiment_table.c.super_experiment_key], 
+        remote_side=[experiment_table.c.id]), 
+    }, 
+)
