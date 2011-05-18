@@ -4,6 +4,7 @@ from sqlalchemy import select
 from tables import *
 import datetime
 from sqlalchemy import func #SQL functions like compress, sha1 etc
+from sqlalchemy.orm import column_property
 
 def add_init(myclass):
 
@@ -60,18 +61,30 @@ def add_mapper(table):
 @add_addfxn
 @add_init
 class Genome(object): 
-    pass
 
-@add_mapper(genomeSeq_table)
+    _defaults = { 
+        'gi'            : '',
+        'ref'           : '',
+        'description'   : '',
+        'comment'       : '',
+    }
+
 @add_addfxn
 @add_init
 class GenomeSeq(object): 
-    def _get_seq(self):
-        proxy = db_genome.execute( 'select uncompress(compress_seq) from \
-                                  genomeSeq where id =  %s' % self.id)
-        return list(proxy)[0][0]
-    def _set_seq(self, text):
-        self.compress_seq = func.compress(text)
+    def get_sequence(self):
+        return self._sequence
+    def set_sequence(self, sequence):
+        self._sequence = sequence
+        self.compress_seq = func.compress(sequence)
+
+    sequence = property(get_sequence,set_sequence)
+
+mapper(GenomeSeq, genomeSeq_table, properties = {
+    'id' : genomeSeq_table.c.id,
+    'compress_seq' : genomeSeq_table.c.compress_seq,
+    '_sequence' : column_property(func.uncompress(genomeSeq_table.c.compress_seq)),
+})
 
 @add_addfxn
 @add_init
