@@ -1,0 +1,41 @@
+http://wiki.python.org/moin/IntegratingPythonWithOtherLanguages
+
+
+PyPerl:
+I had success with PyPerl (Mandrive thing)
+
+import perl
+perl.eval( "use lib './' ")
+perl.require( 'DDB::GENE' )
+
+obj = perl.callm("new", 'DDB::GENE'  )
+obj[ '_ensembl_stable_id' ] = 9
+obj[ '_experiment_key' ] = 42
+#perl.callm( 'addignore_setid', obj, myhash)
+obj.addignore_setid()
+
+
+
+myhash = perl.get_ref( '%' )
+h = {'ensembl_stable_id':  3}
+myhash.update( h )
+
+
+
+
+#TODO: intercept method calls
+http://stackoverflow.com/questions/2704434/intercept-method-calls-in-python
+
+http://search.cpan.org/~gaas/pyperl-1.0/perlmodule.pod
+http://wiki.python.org/moin/PyPerl
+
+http://www.boriel.com/2007/01/21/calling-perl-from-python/
+
+separate perl process to execute it (over STDIN):
+http://pypi.python.org/pypi/perlprocess/0.1
+
+execute through Perl interpreter:
+http://pypi.python.org/pypi/PythonPerl/0.9
+
+
+Commercial Bridgekepper converts Perl and Python source http://www.crazy-compilers.com/bridgekeeper/
