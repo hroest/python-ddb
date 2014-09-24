@@ -1,3 +1,4 @@
+import ddb
 from ddb.shared import *
 
 class Peptide(PerlWrapper):
@@ -15,10 +16,11 @@ class Peptide(PerlWrapper):
         '_peptide_type' : ['','read/write'],
         '_experiment_key' : [0,'read/write'],
         '_parent_sequence_key' : ['','read/write'],
-        '_pi' : [0,'read/write'],
-        '_molecular_weight' : [0,'read/write'],
+        '_pi' : [0.0,'read/write'],
+        '_molecular_weight' : [0.0,'read/write'],
         '_file_key' : [0,'read/write']
      }
+
     def __init__(self, **kwargs):
         perl.require( 'DDB::PEPTIDE' )
         PerlWrapper.__init__( self, 'DDB::PEPTIDE')
@@ -37,10 +39,13 @@ class Peptide(PerlWrapper):
                 setattr(self, '_' + k, kwargs[k] )
             if debug: print(k)
 
-    def get_proteins(self):
-        import ddb
-        p_ids = [v for v in self.get_protein_ids() ]
-        return [ddb.Protein(id = p_id) for p_id in p_ids]
+    def get_proteins(self, load=False):
+        proteins = [ddb.Protein(id = p_id) for p_id in self.get_protein_ids() ]
+        for pr in proteins:
+            if load:
+                pr.load()
+
+        return proteins
 
     @staticmethod
     def find_by_sequence_and_experiment_key(sequence, experiment_key):
@@ -52,3 +57,4 @@ class Peptide(PerlWrapper):
                       ( sequence, experiment_key)  )
         #due to mysql constraints, there is only one result
         return Peptide( id = cursor.fetchall()[0][0] )
+
