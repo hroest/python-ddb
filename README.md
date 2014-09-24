@@ -16,3 +16,19 @@ re-written, it may be more useful to wrap existing Perl code whereas new code
 may already be implemented directly in Python.
 
 
+Install
+=======
+
+For the wrapping of Python code to work, you need the python-perlmodule. On
+debian, you can get it as follows
+
+```
+$ sudo apt-get install libpython-perl
+$ git clone https://github.com/nikicat/python-perlmodule
+$ python setup.py build
+$ sudo python setup.py install
+```
+
+Note that the code in the current module is not really installable code but
+rather research-grade. 
+
