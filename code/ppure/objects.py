@@ -7,6 +7,33 @@ from sqlalchemy import func #SQL functions like compress, sha1 etc
 from sqlalchemy.orm import column_property
 
 def add_init(myclass):
+    """
+    Allows the initialization of new database objects easily.
+
+    This decorator adds a new __init__ function to the decorated class which
+    can take one of two forms:
+        - standard: through keywords
+        - with defaults: through keywords and all fields are set to their default values
+
+    For the second mechanism to work, the class needs to proivde a "_defaults"
+    dictionary as a class member. For example, the following class:
+
+    @add_init
+    class Book(object): 
+
+        _defaults = { 
+            'ISBN'          : '978-3-16-148410-0',
+            'url'           : 'http://www.example.com'
+            'author'        : 'unknown',
+            'title'         : '',
+        }
+
+
+    The added __init__ function has the signature __init__(self, **kwargs) and
+    during initialization, setattr is used to try and set the value for each
+    provided keyword argument.
+
+    """
 
     def init_standard(self, **kwargs): 
         # we go through all arguments given as keywords and set them 
@@ -15,7 +42,9 @@ def add_init(myclass):
             setattr( self, k, kwargs[k])
 
     def init_with_defaults(self, **kwargs): 
-        for d in self.__class__._defaults: setattr( self, d, self.__class__._defaults[d])
+        for d in self.__class__._defaults:
+            setattr( self, d, self.__class__._defaults[d])
+
         self.insert_date = datetime.datetime.utcnow().strftime('%Y-%m-%d')
 
         # we go through all arguments given as keywords and set them 
@@ -23,17 +52,32 @@ def add_init(myclass):
         for k in kwargs:
             setattr( self, k, kwargs[k])
 
-    if myclass.__dict__.has_key('_defaults'): myclass.__init__ = init_with_defaults
-    else:                                      myclass.__init__ = init_standard
+    # Select initialization method
+    if myclass.__dict__.has_key('_defaults'):
+        myclass.__init__ = init_with_defaults
+    else:
+        myclass.__init__ = init_standard
+
     return myclass
 
 def add_addfxn(myclass):
+    """
+    Add a few default functions to a new class
+
+    Adds the following functions (if they are not already present) to the wrapped object:
+        - add (add and commit)
+        - exists (check if current id already exists)
+        - addignore_setid (add to table if current object does not yet exist)
+    """
 
     #generic addignore
     def addignore_setid(self, session):
         p = self.exists(session)
-        if p is None: return self.add(session)
-        else: return p
+
+        if p is None:
+            return self.add(session)
+        else:
+            return p
 
     #generic exist, will only check whether this id is already present
     def exists(self, session):
@@ -45,13 +89,37 @@ def add_addfxn(myclass):
         session.commit()
         return self
 
-    if not myclass.__dict__.has_key('add'):             myclass.add = add
-    if not myclass.__dict__.has_key('exists'):          myclass.exists = exists
-    if not myclass.__dict__.has_key('addignore_setid'): myclass.addignore_setid = addignore_setid
+    if not myclass.__dict__.has_key('add'):
+        myclass.add = add
+
+    if not myclass.__dict__.has_key('exists'):
+        myclass.exists = exists
+
+    if not myclass.__dict__.has_key('addignore_setid'):
+        myclass.addignore_setid = addignore_setid
 
     return myclass
 
 def add_mapper(table):
+    """
+    Simple convenience class decorator
+
+    Instead of writing
+
+        class User(object):
+            pass
+        mapper(User, usertable)
+
+    one can write directly
+
+        @add_mapper(usertable)
+        class User(object):
+            pass
+
+    which strenghtens the assocation between the object and its associated
+    database.
+    """
+
     def wrap(myclass):
         mapper(myclass, table)
         return myclass
