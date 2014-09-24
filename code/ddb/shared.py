@@ -23,6 +23,7 @@ class PerlWrapper(object):
         if debug: 
             print('initalize an instance of ' + name)
 
+        perl.require( name )
         ref = perl.callm("new", name )
         self.__dict__[ 'ref' ] = ref
 
