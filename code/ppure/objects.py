@@ -5,6 +5,7 @@ from db_tables import *
 import datetime
 from sqlalchemy import func #SQL functions like compress, sha1 etc
 from sqlalchemy.orm import column_property
+import Bio.Seq
 
 def add_init(myclass):
     """
@@ -206,7 +207,60 @@ class Feature(object):
     }
 
     def __repr__(self):
-       return "<Feature(id '%s', genome '%s', seq '%s', '%s', '%s', '%s', '%s', '%s')>" % (self.id, self.genome_key, self.sequence_key, self.strand, self.type, self.start, self.end, self.gene )
+       return "<Feature(id '%s', genome '%s', seq '%s', '%s', '%s', '%s', '%s', '%s')>" % (
+           self.id, self.genome_key, self.sequence_key, self.strand, self.type, self.start, self.end, self.gene )
+
+    def full_str(self):
+       return "<Feature(id '%s', genome '%s', from '%s' to '%s' annotated as %s, %s, %s with protein %s, %s, %s)>" % (
+           self.id, self.genome_key, self.start, self.end, self.gene, self.locus_tag, self.note, self.product, self.protein_id, self.ec_number)
+
+    def map_mutation(self, snp):
+        """
+        Map a single mutation to the Feature
+
+        Returns an object of type AAMutation
+        """
+
+        class AAMutation():
+            def __init__(self, snp, feature, position, codon_orig, codon_mut):
+                self.snp = snp
+                self.feature = feature
+                self.position = position
+                self.codon_orig = codon_orig
+                self.codon_mut = codon_mut
+
+            def __str__(self):
+                return '%s%s%s' % (self.codon_orig.translate(), self.position, self.codon_mut.translate())
+
+            def getType(self):
+                if str(self.codon_orig.translate()) == str(self.codon_mut.translate()):
+                    return "synonymous"
+                else:
+                    return "nonsynonymous"
+
+        position = snp.position
+        orig = snp.original_char
+        mutated = snp.mutated_char
+        gene = self
+        dna = gene.genome.sequence.sequence[gene.start-1:gene.end]
+
+        relpos = position - gene.start 
+        codonpos = relpos / 3
+        incodonpos = relpos % 3
+        strcodon = dna[codonpos*3:codonpos*3+3]
+        codon = Bio.Seq.Seq(strcodon)
+        mutated_codon = Bio.Seq.Seq(strcodon[:incodonpos] + mutated + strcodon[incodonpos+1:])
+        # print '%s%s%s' % (codon.translate(), codonpos+1, mutated_codon.translate())
+        return AAMutation(snp, self, codonpos+1, codon, mutated_codon)
+
+    def get_dna_forward_strand(self):
+        """
+        Get the corresponding DNA for this feature in the correct orientation
+        """
+        if self.strand == '+':
+          return Bio.Seq.Seq(self.genome.sequence.sequence[self.start:self.end])
+        elif self.strand == '-':
+          return Bio.Seq.Seq(self.genome.sequence.sequence[self.start:self.end]).reverse_complement() 
 
 mapper(Feature, feature_table , properties = {
     'sequence' : relation (Sequence, primaryjoin=
