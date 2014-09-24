@@ -152,6 +152,10 @@ mapper(GenomeSeq, genomeSeq_table, properties = {
     'id' : genomeSeq_table.c.id,
     'compress_seq' : genomeSeq_table.c.compress_seq,
     '_sequence' : column_property(func.uncompress(genomeSeq_table.c.compress_seq)),
+    'genome' : relation (Genome, primaryjoin=
+        genomeSeq_table.c.id==genome_table.c.id, 
+        backref=backref('sequence', uselist=False),
+        foreign_keys=[genomeSeq_table.c.id]),
 })
 
 @add_addfxn
@@ -207,7 +211,42 @@ class Feature(object):
 mapper(Feature, feature_table , properties = {
     'sequence' : relation (Sequence, primaryjoin=
         feature_table.c.sequence_key==sequence_table.c.id, 
-        foreign_keys=[feature_table.c.sequence_key]) } )
+        foreign_keys=[feature_table.c.sequence_key]),
+    'genome' : relation (Genome, primaryjoin=
+        feature_table.c.genome_key==genome_table.c.id, 
+        backref='features',
+        foreign_keys=[feature_table.c.genome_key]) 
+
+} )
+
+@add_init
+@add_addfxn
+class SNP(object): 
+
+    _defaults = { 
+       'experiment_key'     : '',
+       'ref_genome_key'     : '',
+       'position'           : '',
+       'original_char'      : '',
+       'mutated_char'       : '',
+       'assemb_genome_key'  : '',
+       'position_assemb'    : '',
+       'buff'               : '',
+       'dist'               : '',
+       'frm_1'              : '',
+       'frm_2'              : '',
+    }
+
+    def __repr__(self):
+       return "<SNP(id '%s', ref_genome '%s', experiment '%s', position '%s', from '%s', to '%s')>" % (self.id, self.ref_genome_key, self.experiment_key, self.position, self.original_char, self.mutated_char)
+
+mapper(SNP, SNP_table , properties = {
+    'features' : relation (Feature, secondary=SNPFeatureLink_table,
+        primaryjoin=SNP_table.c.id==SNPFeatureLink_table.c.snp_id, 
+        secondaryjoin=and_(SNPFeatureLink_table.c.feature_id==feature_table.c.id),
+        backref='snps',
+        foreign_keys=[SNPFeatureLink_table.c.snp_id,SNPFeatureLink_table.c.feature_id]) } )
+
  
 @add_mapper(peptide_table)
 @add_addfxn
