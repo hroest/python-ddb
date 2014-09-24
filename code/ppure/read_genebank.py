@@ -1,5 +1,5 @@
 # tutorial
-from tables import *
+from db_tables import *
 from objects import *
 
 import sys

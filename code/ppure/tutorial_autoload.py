@@ -1,7 +1,7 @@
 # tutorial
 from sqlalchemy.orm import sessionmaker
 
-from tables import *
+from db_tables import *
 from objects import *
 
 Session = sessionmaker()

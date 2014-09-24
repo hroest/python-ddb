@@ -1,7 +1,7 @@
 from sqlalchemy.orm import mapper, relation, backref
 from sqlalchemy import and_
 from sqlalchemy import select
-from tables import *
+from db_tables import *
 import datetime
 from sqlalchemy import func #SQL functions like compress, sha1 etc
 from sqlalchemy.orm import column_property

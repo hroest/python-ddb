@@ -28,13 +28,16 @@ protPepLink_table = Table('protPepLink', mymetadata, autoload=True)
 geneProtLink_table = Table('geneProtLink', mymetadata,autoload=True)
 experiment_table = Table('experiment', mymetadata,autoload=True)
 
-#meta
-sequence_table = Table('sequence', metadata_meta, autoload = True)
+#meta -> moved to ddb
+# sequence_table = Table('sequence', metadata_meta, autoload = True)
+sequence_table = Table('sequence', mymetadata, autoload = True)
 
 #genome
 feature_table = Table('feature', metadata_genome,autoload=True)
-genome_table = Table('genome', metadata_genome,autoload=True)
+genome_table = Table('genome', mymetadata,autoload=True)
 genomeSeq_table = Table('genomeSeq', metadata_genome,autoload=True)
+SNP_table = Table('SNP', metadata_genome,autoload=True)
+SNPFeatureLink_table = Table('feature_snp', metadata_genome, autoload=True)
 
 
 Session = sessionmaker()
